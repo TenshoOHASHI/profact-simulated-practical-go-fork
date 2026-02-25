@@ -1,8 +1,6 @@
 package usecase
 
 import (
-	"fmt"
-
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
 )
 
@@ -41,7 +39,6 @@ func (u *customerUsecase) UpdateCustomer(customer *domain.Customer) (*domain.Cus
 		return nil, err
 	}
 
-	fmt.Println("customer:", customer)
 	if customer.Name != "" {
 		existing.Name = customer.Name
 	}

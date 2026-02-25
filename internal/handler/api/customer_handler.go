@@ -81,7 +81,7 @@ func (h *CustomerHandler) UpdateCustomer(c *gin.Context) {
 	customer.ID = id
 
 	updated, err := h.usecase.UpdateCustomer(&customer)
-	
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
