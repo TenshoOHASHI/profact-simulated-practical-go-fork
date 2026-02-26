@@ -3,17 +3,22 @@ package api
 import (
 	"net/http"
 	"strconv"
+
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
+	"github.com/yamu-studio/profact-simulated-practical-go/internal/handler/request"
+	"github.com/yamu-studio/profact-simulated-practical-go/internal/handler/response"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/usecase"
 )
 
 type CustomerHandler struct {
-	usecase usecase.CustomerUsecase
+	usecase   usecase.CustomerUsecase
+	validator *validator.Validate
 }
 
-func NewCustomerHandler(u usecase.CustomerUsecase) *CustomerHandler {
-	return &CustomerHandler{usecase: u}
+func NewCustomerHandler(u usecase.CustomerUsecase, v *validator.Validate) *CustomerHandler {
+	return &CustomerHandler{usecase: u, validator: v}
 }
 
 func (h *CustomerHandler) ListCustomers(c *gin.Context) {
@@ -56,17 +61,35 @@ func (h *CustomerHandler) GetCustomer(c *gin.Context) {
 }
 
 func (h *CustomerHandler) CreateCustomer(c *gin.Context) {
-	var customer domain.Customer
-	if err := c.ShouldBindJSON(&customer); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var req request.CreateCustomerRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "リクエスト形式が不正です",
+		})
 		return
 	}
 
-	if err := h.usecase.CreateCustomer(&customer); err != nil {
+	if err := h.validator.Struct(req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "入力内容にエラーがあります",
+			Errors:  response.FormatValidationErrors(err),
+		})
+		return
+	}
+
+	customer := &domain.Customer{
+		Name:  req.Name,
+		Email: req.Email,
+		Phone: req.Phone,
+	}
+
+	if err := h.usecase.CreateCustomer(customer); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
-	}
 
+	}
 	c.JSON(http.StatusCreated, customer)
 }
 

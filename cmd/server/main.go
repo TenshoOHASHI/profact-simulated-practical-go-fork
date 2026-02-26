@@ -10,6 +10,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/handler/api"
+	"github.com/yamu-studio/profact-simulated-practical-go/internal/handler/validator"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/repository"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/usecase"
 )
@@ -40,8 +41,10 @@ func main() {
 	propertyUC := usecase.NewPropertyUsecase(propertyRepo)
 	dealUC := usecase.NewDealUsecase(dealRepo)
 
+	// Validator: バリデーション
+	v := validator.NewValidator()
 	// DI: ハンドラ
-	customerHandler := api.NewCustomerHandler(customerUC)
+	customerHandler := api.NewCustomerHandler(customerUC, v)
 	propertyHandler := api.NewPropertyHandler(propertyUC)
 	dealHandler := api.NewDealHandler(dealUC)
 
