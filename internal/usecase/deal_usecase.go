@@ -11,8 +11,9 @@ var validStatuses = map[string]bool{
 	"new_lead":          true,
 	"following_up":      true,
 	"viewing_scheduled": true,
-	"application":       true,
-	"contract":          true,
+	"applying":          true,
+	"contracted":        true,
+	"lost":              true,
 }
 
 type DealUsecase interface {

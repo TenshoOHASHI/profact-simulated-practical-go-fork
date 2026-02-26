@@ -46,7 +46,7 @@ func main() {
 	// DI: ハンドラ
 	customerHandler := api.NewCustomerHandler(customerUC, v)
 	propertyHandler := api.NewPropertyHandler(propertyUC, v)
-	dealHandler := api.NewDealHandler(dealUC)
+	dealHandler := api.NewDealHandler(dealUC, v)
 
 	r := gin.Default()
 
