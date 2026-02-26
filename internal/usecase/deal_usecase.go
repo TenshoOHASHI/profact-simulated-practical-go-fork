@@ -2,15 +2,25 @@ package usecase
 
 import (
 	"errors"
+
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
 )
+
+// 簡易的なステータスバリデーション例
+var validStatuses = map[string]bool{
+	"new_lead":          true,
+	"following_up":      true,
+	"viewing_scheduled": true,
+	"application":       true,
+	"contract":          true,
+}
 
 type DealUsecase interface {
 	ListDeals() ([]*domain.Deal, error)
 	GetDeal(id string) (*domain.Deal, error)
 	CreateDeal(deal *domain.Deal) error
-	UpdateDeal(deal *domain.Deal) error
-	UpdateDealStatus(id, status string, assigneeID *string) error
+	UpdateDeal(deal *domain.Deal) (*domain.Deal, error)
+	UpdateDealStatus(id, status string, assigneeID *string) (*domain.Deal, error)
 	DeleteDeal(id string) error
 }
 
@@ -34,25 +44,70 @@ func (u *dealUsecase) CreateDeal(deal *domain.Deal) error {
 	return u.repo.Create(deal)
 }
 
-func (u *dealUsecase) UpdateDeal(deal *domain.Deal) error {
-	return u.repo.Update(deal)
+func (u *dealUsecase) UpdateDeal(deal *domain.Deal) (*domain.Deal, error) {
+	existing, err := u.repo.FindByID(deal.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if existing == nil {
+		return nil, errors.New("deal not found")
+	}
+
+	if deal.CustomerName != "" {
+		existing.CustomerName = deal.CustomerName
+	}
+	if deal.PropertyID != nil {
+		existing.PropertyID = deal.PropertyID
+	}
+
+	if deal.AssigneeID != nil {
+		existing.AssigneeID = deal.AssigneeID
+	}
+
+	if deal.Status != "" && !validStatuses[deal.Status] {
+		return nil, errors.New("invalid status transition")
+	}
+
+	if deal.Status != "" {
+		existing.Status = deal.Status
+	}
+
+	if err := u.repo.Update(existing); err != nil {
+		return nil, err
+	}
+
+	return existing, err
 }
 
-func (u *dealUsecase) UpdateDealStatus(id, status string, assigneeID *string) error {
-	// 簡易的なステータスバリデーション例
-	validStatuses := map[string]bool{
-		"new_lead":          true,
-		"following_up":      true,
-		"viewing_scheduled": true,
-		"application":       true,
-		"contract":          true,
+func (u *dealUsecase) UpdateDealStatus(id, status string, assigneeID *string) (*domain.Deal, error) {
+
+	existing, err := u.repo.FindByID(id)
+	if err != nil {
+		return nil, err
 	}
 
-	if !validStatuses[status] {
-		return errors.New("invalid status transition")
+	if existing == nil {
+		return nil, errors.New("deal not found")
 	}
 
-	return u.repo.UpdateStatus(id, status, assigneeID)
+	if assigneeID != nil {
+		existing.AssigneeID = assigneeID
+	}
+
+	if status != "" && !validStatuses[status] {
+		return nil, errors.New("invalid status transition")
+	}
+
+	// ステータスが指定されている場合のみ更新
+	if status != "" {
+		existing.Status = status
+	}
+
+	if err := u.repo.UpdateStatus(id, existing.Status, existing.AssigneeID); err != nil {
+		return nil, err
+	}
+	return existing, nil
 }
 
 func (u *dealUsecase) DeleteDeal(id string) error {

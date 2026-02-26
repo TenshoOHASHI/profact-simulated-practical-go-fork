@@ -102,12 +102,14 @@ func (h *CustomerHandler) UpdateCustomer(c *gin.Context) {
 	}
 	customer.ID = id
 
-	if err := h.usecase.UpdateCustomer(&customer); err != nil {
+	updated, err := h.usecase.UpdateCustomer(&customer)
+
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, customer)
+	c.JSON(http.StatusOK, updated)
 }
 
 func (h *CustomerHandler) DeleteCustomer(c *gin.Context) {
