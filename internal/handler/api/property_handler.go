@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/usecase"
@@ -64,12 +65,14 @@ func (h *PropertyHandler) UpdateProperty(c *gin.Context) {
 	}
 	property.ID = id
 
-	if err := h.usecase.UpdateProperty(&property); err != nil {
+	updated, err := h.usecase.UpdateProperty(&property)
+
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, property)
+	c.JSON(http.StatusOK, updated)
 }
 
 func (h *PropertyHandler) DeleteProperty(c *gin.Context) {
