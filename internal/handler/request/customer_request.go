@@ -1,7 +1,7 @@
 package request
 
 type PathID struct {
-	ID string `uri:"id" binding:"required,max=255"`
+	ID string `uri:"id" binding:"required,len=36"`
 }
 
 type CreateCustomerRequest struct {

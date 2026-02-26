@@ -45,7 +45,7 @@ func main() {
 	v := validator.NewValidator()
 	// DI: ハンドラ
 	customerHandler := api.NewCustomerHandler(customerUC, v)
-	propertyHandler := api.NewPropertyHandler(propertyUC)
+	propertyHandler := api.NewPropertyHandler(propertyUC, v)
 	dealHandler := api.NewDealHandler(dealUC)
 
 	r := gin.Default()

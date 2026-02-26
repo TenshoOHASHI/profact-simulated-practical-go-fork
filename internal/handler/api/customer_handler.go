@@ -86,23 +86,53 @@ func (h *CustomerHandler) CreateCustomer(c *gin.Context) {
 	}
 
 	if err := h.usecase.CreateCustomer(customer); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
+			Code:    500,
+			Message: "サーバー内部エラーが発生しました",
+		})
 		return
-
 	}
 	c.JSON(http.StatusCreated, customer)
 }
 
 func (h *CustomerHandler) UpdateCustomer(c *gin.Context) {
-	id := c.Param("id")
-	var customer domain.Customer
-	if err := c.ShouldBindJSON(&customer); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var pathID request.PathID
+	if err := c.ShouldBindUri(&pathID); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "入力内容にエラーがあります",
+			Errors:  response.FormatValidationErrors(err),
+		})
 		return
 	}
-	customer.ID = id
 
-	updated, err := h.usecase.UpdateCustomer(&customer)
+	var req request.UpdateCustomerRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "入力内容にエラーがあります",
+			Errors:  response.FormatValidationErrors(err),
+		})
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "入力内容にエラーがあります",
+			Errors:  response.FormatValidationErrors(err),
+		})
+		return
+	}
+
+	customer := &domain.Customer{
+		ID:    pathID.ID,
+		Name:  req.Name,
+		Email: req.Email,
+		Phone: req.Phone,
+	}
+
+	updated, err := h.usecase.UpdateCustomer(customer)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

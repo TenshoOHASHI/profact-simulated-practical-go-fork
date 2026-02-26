@@ -4,16 +4,20 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
+	"github.com/yamu-studio/profact-simulated-practical-go/internal/handler/request"
+	"github.com/yamu-studio/profact-simulated-practical-go/internal/handler/response"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/usecase"
 )
 
 type PropertyHandler struct {
-	usecase usecase.PropertyUsecase
+	usecase   usecase.PropertyUsecase
+	validator *validator.Validate
 }
 
-func NewPropertyHandler(u usecase.PropertyUsecase) *PropertyHandler {
-	return &PropertyHandler{usecase: u}
+func NewPropertyHandler(u usecase.PropertyUsecase, v *validator.Validate) *PropertyHandler {
+	return &PropertyHandler{usecase: u, validator: v}
 }
 
 func (h *PropertyHandler) ListProperties(c *gin.Context) {
@@ -42,13 +46,34 @@ func (h *PropertyHandler) GetProperty(c *gin.Context) {
 }
 
 func (h *PropertyHandler) CreateProperty(c *gin.Context) {
-	var property domain.Property
-	if err := c.ShouldBindJSON(&property); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var req request.CreatePropertyRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "リクエスト形式が不正です",
+		})
 		return
 	}
 
-	if err := h.usecase.CreateProperty(&property); err != nil {
+	if err := h.validator.Struct(req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "入力内容にエラーがあります",
+			Errors:  response.FormatValidationErrors(err),
+		})
+		return
+	}
+
+	property := &domain.Property{
+		Name:    req.Name,
+		Rent:    req.Rent,
+		Address: req.Address,
+		Layout:  &req.Layout,
+		Status:  req.Status,
+	}
+
+	if err := h.usecase.CreateProperty(property); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -57,15 +82,46 @@ func (h *PropertyHandler) CreateProperty(c *gin.Context) {
 }
 
 func (h *PropertyHandler) UpdateProperty(c *gin.Context) {
-	id := c.Param("id")
-	var property domain.Property
-	if err := c.ShouldBindJSON(&property); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+	var pathID request.PathID
+	if err := c.ShouldBindUri(&pathID); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "入力内容にエラーがあります",
+			Errors:  response.FormatValidationErrors(err),
+		})
 		return
 	}
-	property.ID = id
 
-	updated, err := h.usecase.UpdateProperty(&property)
+	var req request.UpdatePropertyRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "入力内容にエラーがあります",
+			Errors:  response.FormatValidationErrors(err),
+		})
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "入力内容にエラーがあります",
+			Errors:  response.FormatValidationErrors(err),
+		})
+		return
+	}
+
+	property := &domain.Property{
+		ID:      pathID.ID,
+		Name:    req.Name,
+		Rent:    req.Rent,
+		Address: req.Address,
+		Layout:  req.Layout,
+		Status:  req.Status,
+	}
+
+	updated, err := h.usecase.UpdateProperty(property)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
