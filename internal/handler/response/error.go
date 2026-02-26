@@ -20,7 +20,11 @@ type ErrorResponse struct {
 func FormatValidationErrors(err error) []ValidationError {
 	var errors []ValidationError
 
-	validationErrors := err.(validator.ValidationErrors)
+	validationErrors, ok := err.(validator.ValidationErrors)
+
+	if !ok {
+		return nil
+	}
 
 	for _, fe := range validationErrors {
 		var message string

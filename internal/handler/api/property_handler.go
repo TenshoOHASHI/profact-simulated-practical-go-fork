@@ -74,7 +74,10 @@ func (h *PropertyHandler) CreateProperty(c *gin.Context) {
 	}
 
 	if err := h.usecase.CreateProperty(property); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
+			Code:    500,
+			Message: "サーバー内部エラーが発生しました",
+		})
 		return
 	}
 
