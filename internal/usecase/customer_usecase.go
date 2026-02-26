@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"errors"
+
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
 )
 
@@ -37,6 +39,10 @@ func (u *customerUsecase) UpdateCustomer(customer *domain.Customer) (*domain.Cus
 	existing, err := u.repo.FindByID(customer.ID)
 	if err != nil {
 		return nil, err
+	}
+
+	if existing == nil {
+		return nil, errors.New("customer not found")
 	}
 
 	if customer.Name != "" {

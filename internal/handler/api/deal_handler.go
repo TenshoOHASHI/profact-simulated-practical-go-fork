@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/usecase"
@@ -64,12 +65,14 @@ func (h *DealHandler) UpdateDeal(c *gin.Context) {
 	}
 	deal.ID = id
 
-	if err := h.usecase.UpdateDeal(&deal); err != nil {
+	updated, err := h.usecase.UpdateDeal(&deal)
+
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, deal)
+	c.JSON(http.StatusOK, updated)
 }
 
 // UpdateDealStatus represents the kanban movement
@@ -84,7 +87,7 @@ func (h *DealHandler) UpdateDealStatus(c *gin.Context) {
 		return
 	}
 
-	if err := h.usecase.UpdateDealStatus(id, req.Status, req.AssigneeID); err != nil {
+	if _, err := h.usecase.UpdateDealStatus(id, req.Status, req.AssigneeID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
