@@ -164,7 +164,7 @@ func (h *DealHandler) UpdateDealStatus(c *gin.Context) {
 		return
 	}
 
-	if _, err := h.usecase.UpdateDealStatus(pathID.ID, req.Status, req.AssigneeID); err != nil {
+	if _, err := h.usecase.UpdateDealStatus(pathID.ID, req.Status); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

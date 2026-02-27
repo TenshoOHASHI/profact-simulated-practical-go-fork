@@ -34,7 +34,7 @@ func FormatValidationErrors(err error) []ValidationError {
 		case "email":
 			message = "有効なメールアドレス形式で入力してください"
 		case "phone":
-			message = "数字とハイフンのみ使用可能です"
+			message = "電話番号が正しくありません"
 		case "max":
 			message = fmt.Sprintf("%s文字以内で入力してください", fe.Param())
 		case "len":
@@ -47,6 +47,8 @@ func FormatValidationErrors(err error) []ValidationError {
 			message = "有効な値を指定してください"
 		case "min":
 			message = fmt.Sprintf("%s文字以上で入力してください", fe.Param())
+		case "datetime":
+			message = "正しい日付形式で入力してください"
 		default:
 			message = "入力内容に誤りがあります"
 		}

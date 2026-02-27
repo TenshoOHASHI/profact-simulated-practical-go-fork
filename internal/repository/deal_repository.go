@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+
 	"github.com/google/uuid"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
 )
@@ -16,13 +17,13 @@ func NewDealRepository(db *sql.DB) domain.DealRepository {
 
 func (r *dealRepository) FindAll() ([]*domain.Deal, error) {
 	query := `
-		SELECT 
+		SELECT
 			d.id, d.customer_id, d.property_id, d.assignee_id, d.status, d.move_in_date, d.created_at, d.updated_at,
 			c.name as customer_name
 		FROM deals d
 		JOIN customers c ON d.customer_id = c.id
 		ORDER BY d.created_at DESC`
-	
+
 	rows, err := r.db.Query(query)
 	if err != nil {
 		return nil, err
@@ -52,13 +53,13 @@ func (r *dealRepository) FindAll() ([]*domain.Deal, error) {
 
 func (r *dealRepository) FindByID(id string) (*domain.Deal, error) {
 	query := `
-		SELECT 
+		SELECT
 			d.id, d.customer_id, d.property_id, d.assignee_id, d.status, d.move_in_date, d.created_at, d.updated_at,
 			c.name as customer_name
 		FROM deals d
 		JOIN customers c ON d.customer_id = c.id
 		WHERE d.id = ? LIMIT 1`
-	
+
 	deal := &domain.Deal{}
 	err := r.db.QueryRow(query, id).Scan(
 		&deal.ID,
@@ -95,9 +96,9 @@ func (r *dealRepository) Update(deal *domain.Deal) error {
 	return err
 }
 
-func (r *dealRepository) UpdateStatus(id, status string, assigneeID *string) error {
+func (r *dealRepository) UpdateStatus(id, status string) error {
 	query := `UPDATE deals SET status = ?, assignee_id = ? WHERE id = ?`
-	_, err := r.db.Exec(query, status, assigneeID, id)
+	_, err := r.db.Exec(query, status, id)
 	return err
 }
 
