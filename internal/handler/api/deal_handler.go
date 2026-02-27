@@ -68,7 +68,7 @@ func (h *DealHandler) CreateDeal(c *gin.Context) {
 
 	propertyID := req.PropertyID
 	assigneeID := req.AssigneeID
-	moveInDate, _ := time.Parse("2006-01-02", req.MoveInDate)
+	moveInDate, _ := time.Parse("2006-01-02T15:04:05Z", req.MoveInDate)
 	deal := &domain.Deal{
 		CustomerID: req.CustomerID,
 		PropertyID: &propertyID,
@@ -119,7 +119,7 @@ func (h *DealHandler) UpdateDeal(c *gin.Context) {
 
 	var moveInDate *time.Time
 	if req.MoveInDate != nil {
-		parsed, _ := time.Parse("2006-01-02", *req.MoveInDate)
+		parsed, _ := time.Parse("2006-01-02T15:04:05Z", *req.MoveInDate)
 		moveInDate = &parsed
 	}
 
