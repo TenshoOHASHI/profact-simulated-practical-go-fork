@@ -7,7 +7,7 @@ type CreateDealRequest struct {
 	PropertyID string     `json:"property_id" validate:"required,len=36"`
 	AssigneeID string     `json:"assignee_id" validate:"required,len=36"`
 	Status     string     `json:"status" validate:"required,oneof=new_lead following_up viewing_scheduled applying contracted lost"`
-	MoveInDate *time.Time `json:"move_in_date"`
+	MoveInDate *time.Time `json:"move_in_date" validate:"required"`
 }
 
 type UpdateDealRequest struct {
