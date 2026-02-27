@@ -100,8 +100,7 @@ func (h *CustomerHandler) UpdateCustomer(c *gin.Context) {
 	if err := c.ShouldBindUri(&pathID); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
 			Code:    400,
-			Message: "入力内容にエラーがあります",
-			Errors:  response.FormatValidationErrors(err),
+			Message: "リクエスト形式が不正です",
 		})
 		return
 	}

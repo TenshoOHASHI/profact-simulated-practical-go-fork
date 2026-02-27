@@ -92,7 +92,7 @@ func (h *DealHandler) UpdateDeal(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
 			Code:    400,
 			Message: "入力内容にエラーがあります",
-			Errors:  []response.ValidationError{{Field: "ID", Error: "不正なID形式です"}},
+			Errors:  response.FormatValidationErrors(err),
 		})
 		return
 	}
@@ -141,7 +141,7 @@ func (h *DealHandler) UpdateDealStatus(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
 			Code:    400,
 			Message: "入力内容にエラーがあります",
-			Errors:  []response.ValidationError{{Field: "ID", Error: "不正なID形式です"}},
+			Errors:  response.FormatValidationErrors(err),
 		})
 		return
 	}

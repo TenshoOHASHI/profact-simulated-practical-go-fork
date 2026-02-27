@@ -32,23 +32,23 @@ func FormatValidationErrors(err error) []ValidationError {
 		case "required":
 			message = "必須項目です"
 		case "email":
-			message = "有効なメールアドレスを入力してください"
+			message = "有効なメールアドレス形式で入力してください"
 		case "phone":
 			message = "数字とハイフンのみ使用可能です"
 		case "max":
 			message = fmt.Sprintf("%s文字以内で入力してください", fe.Param())
 		case "len":
 			if fe.Param() == "36" {
-				message = "正しいID形式で入力してください"
+				message = "不正なID形式です"
 			} else {
 				message = fmt.Sprintf("%s文字で入力してください", fe.Param())
 			}
 		case "oneof":
 			message = "有効な値を指定してください"
 		case "min":
-			message = fmt.Sprintf("%s以上の値を入力してください", fe.Param())
+			message = fmt.Sprintf("%s文字以上で入力してください", fe.Param())
 		default:
-			message = "無効な値です"
+			message = "入力内容に誤りがあります"
 		}
 
 		errors = append(errors, ValidationError{
