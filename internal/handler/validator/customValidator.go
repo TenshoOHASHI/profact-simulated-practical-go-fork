@@ -30,8 +30,8 @@ func NewValidator() *validator.Validate {
 		if phoneStr == "" {
 			return true
 		}
-
-		matched, _ := regexp.MatchString(`^[0-9\-]+$`, phoneStr)
+		// 固定電話と携帯電話
+		matched, _ := regexp.MatchString(`^(\d{4}-\d{2}-\d{4}|\d{3}-\d{4}-\d{4})$`, phoneStr)
 		return matched
 	})
 
