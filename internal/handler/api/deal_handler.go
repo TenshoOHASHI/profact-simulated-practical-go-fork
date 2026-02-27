@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -67,12 +68,13 @@ func (h *DealHandler) CreateDeal(c *gin.Context) {
 
 	propertyID := req.PropertyID
 	assigneeID := req.AssigneeID
+	moveInDate, _ := time.Parse("2006-01-02", req.MoveInDate)
 	deal := &domain.Deal{
 		CustomerID: req.CustomerID,
 		PropertyID: &propertyID,
 		AssigneeID: &assigneeID,
 		Status:     req.Status,
-		MoveInDate: req.MoveInDate,
+		MoveInDate: &moveInDate,
 	}
 
 	if err := h.usecase.CreateDeal(deal); err != nil {
@@ -115,13 +117,19 @@ func (h *DealHandler) UpdateDeal(c *gin.Context) {
 		return
 	}
 
+	var moveInDate *time.Time
+	if req.MoveInDate != nil {
+		parsed, _ := time.Parse("2006-01-02", *req.MoveInDate)
+		moveInDate = &parsed
+	}
+
 	deal := &domain.Deal{
 		ID:         pathID.ID,
 		CustomerID: req.CustomerID,
 		PropertyID: req.PropertyID,
 		AssigneeID: req.AssigneeID,
 		Status:     req.Status,
-		MoveInDate: req.MoveInDate,
+		MoveInDate: moveInDate,
 	}
 
 	updated, err := h.usecase.UpdateDeal(deal)
