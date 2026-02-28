@@ -2,18 +2,23 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
+	"github.com/yamu-studio/profact-simulated-practical-go/internal/handler/request"
+	"github.com/yamu-studio/profact-simulated-practical-go/internal/handler/response"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/usecase"
 )
 
 type DealHandler struct {
-	usecase usecase.DealUsecase
+	usecase   usecase.DealUsecase
+	validator *validator.Validate
 }
 
-func NewDealHandler(u usecase.DealUsecase) *DealHandler {
-	return &DealHandler{usecase: u}
+func NewDealHandler(u usecase.DealUsecase, v *validator.Validate) *DealHandler {
+	return &DealHandler{usecase: u, validator: v}
 }
 
 func (h *DealHandler) ListDeals(c *gin.Context) {
@@ -42,14 +47,41 @@ func (h *DealHandler) GetDeal(c *gin.Context) {
 }
 
 func (h *DealHandler) CreateDeal(c *gin.Context) {
-	var deal domain.Deal
-	if err := c.ShouldBindJSON(&deal); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var req request.CreateDealRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "リクエスト形式が不正です",
+		})
 		return
 	}
 
-	if err := h.usecase.CreateDeal(&deal); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err := h.validator.Struct(req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "入力内容にエラーがあります",
+			Errors:  response.FormatValidationErrors(err),
+		})
+		return
+	}
+
+	propertyID := req.PropertyID
+	assigneeID := req.AssigneeID
+	moveInDate, _ := time.Parse("2006-01-02T15:04:05Z", req.MoveInDate)
+	deal := &domain.Deal{
+		CustomerID: req.CustomerID,
+		PropertyID: &propertyID,
+		AssigneeID: &assigneeID,
+		Status:     req.Status,
+		MoveInDate: &moveInDate,
+	}
+
+	if err := h.usecase.CreateDeal(deal); err != nil {
+		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
+			Code:    500,
+			Message: "サーバー内部エラーが発生しました",
+		})
 		return
 	}
 
@@ -57,15 +89,50 @@ func (h *DealHandler) CreateDeal(c *gin.Context) {
 }
 
 func (h *DealHandler) UpdateDeal(c *gin.Context) {
-	id := c.Param("id")
-	var deal domain.Deal
-	if err := c.ShouldBindJSON(&deal); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var pathID request.PathID
+	if err := c.ShouldBindUri(&pathID); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "入力内容にエラーがあります",
+			Errors:  response.FormatValidationErrors(err),
+		})
 		return
 	}
-	deal.ID = id
 
-	updated, err := h.usecase.UpdateDeal(&deal)
+	var req request.UpdateDealRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "リクエスト形式が不正です",
+		})
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "入力内容にエラーがあります",
+			Errors:  response.FormatValidationErrors(err),
+		})
+		return
+	}
+
+	var moveInDate *time.Time
+	if req.MoveInDate != nil {
+		parsed, _ := time.Parse("2006-01-02T15:04:05Z", *req.MoveInDate)
+		moveInDate = &parsed
+	}
+
+	deal := &domain.Deal{
+		ID:         pathID.ID,
+		CustomerID: req.CustomerID,
+		PropertyID: req.PropertyID,
+		AssigneeID: req.AssigneeID,
+		Status:     req.Status,
+		MoveInDate: moveInDate,
+	}
+
+	updated, err := h.usecase.UpdateDeal(deal)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -77,17 +144,35 @@ func (h *DealHandler) UpdateDeal(c *gin.Context) {
 
 // UpdateDealStatus represents the kanban movement
 func (h *DealHandler) UpdateDealStatus(c *gin.Context) {
-	id := c.Param("id")
-	var req struct {
-		Status     string  `json:"status"`
-		AssigneeID *string `json:"assignee_id"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var pathID request.PathID
+	if err := c.ShouldBindUri(&pathID); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "入力内容にエラーがあります",
+			Errors:  response.FormatValidationErrors(err),
+		})
 		return
 	}
 
-	if _, err := h.usecase.UpdateDealStatus(id, req.Status, req.AssigneeID); err != nil {
+	var req request.UpdateDealStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "リクエスト形式が不正です",
+		})
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "入力内容にエラーがあります",
+			Errors:  response.FormatValidationErrors(err),
+		})
+		return
+	}
+
+	if _, err := h.usecase.UpdateDealStatus(pathID.ID, req.Status); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

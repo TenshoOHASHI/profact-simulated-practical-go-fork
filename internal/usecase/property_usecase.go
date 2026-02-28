@@ -9,9 +9,8 @@ import (
 // 簡易的なステータスバリデーション例
 var validPropertyStatuses = map[string]bool{
 	"available":  true,
-	"reserved":   true,
 	"contracted": true,
-	"inactive":   true,
+	"hidden":     true,
 }
 
 type PropertyUsecase interface {

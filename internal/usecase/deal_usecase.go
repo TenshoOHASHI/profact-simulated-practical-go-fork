@@ -11,8 +11,9 @@ var validStatuses = map[string]bool{
 	"new_lead":          true,
 	"following_up":      true,
 	"viewing_scheduled": true,
-	"application":       true,
-	"contract":          true,
+	"applying":          true,
+	"contracted":        true,
+	"lost":              true,
 }
 
 type DealUsecase interface {
@@ -20,7 +21,7 @@ type DealUsecase interface {
 	GetDeal(id string) (*domain.Deal, error)
 	CreateDeal(deal *domain.Deal) error
 	UpdateDeal(deal *domain.Deal) (*domain.Deal, error)
-	UpdateDealStatus(id, status string, assigneeID *string) (*domain.Deal, error)
+	UpdateDealStatus(id, status string) (*domain.Deal, error)
 	DeleteDeal(id string) error
 }
 
@@ -80,7 +81,7 @@ func (u *dealUsecase) UpdateDeal(deal *domain.Deal) (*domain.Deal, error) {
 	return existing, err
 }
 
-func (u *dealUsecase) UpdateDealStatus(id, status string, assigneeID *string) (*domain.Deal, error) {
+func (u *dealUsecase) UpdateDealStatus(id, status string) (*domain.Deal, error) {
 
 	existing, err := u.repo.FindByID(id)
 	if err != nil {
@@ -89,10 +90,6 @@ func (u *dealUsecase) UpdateDealStatus(id, status string, assigneeID *string) (*
 
 	if existing == nil {
 		return nil, errors.New("deal not found")
-	}
-
-	if assigneeID != nil {
-		existing.AssigneeID = assigneeID
 	}
 
 	if status != "" && !validStatuses[status] {
@@ -104,7 +101,7 @@ func (u *dealUsecase) UpdateDealStatus(id, status string, assigneeID *string) (*
 		existing.Status = status
 	}
 
-	if err := u.repo.UpdateStatus(id, existing.Status, existing.AssigneeID); err != nil {
+	if err := u.repo.UpdateStatus(id, existing.Status); err != nil {
 		return nil, err
 	}
 	return existing, nil
