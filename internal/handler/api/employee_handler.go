@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/handler/request"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/handler/response"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/usecase"
@@ -41,21 +40,22 @@ func (h *EmployeeHandler) CreateEmployee(c *gin.Context) {
 		return
 	}
 
-	employee := &domain.Employee{
-		Name:         req.Name,
-		Email:        req.Email,
-		PasswordHash: req.Password,
-		Role:         req.Role,
+	input := &usecase.CreateEmployeeInput{
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: req.Password,
+		Role:     req.Role,
 	}
 
-	if err := h.usecase.CreateEmployee(employee); err != nil {
+	employee, err := h.usecase.CreateEmployee(input)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
 			Code:    500,
 			Message: "サーバー内部エラーが発生しました",
 		})
 		return
 	}
-	// PasswordHashは json:"-" なので除外される
+
 	c.JSON(http.StatusCreated, employee)
 }
 

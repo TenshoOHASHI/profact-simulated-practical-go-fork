@@ -7,18 +7,25 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type CreateEmployeeInput struct {
+	Name     string
+	Email    string
+	Password string `json:"-"`
+	Role     string
+}
+
 type UpdateEmployeeInput struct {
 	ID       string
 	Name     *string
 	Email    *string
-	Password *string
+	Password *string `json:"-"`
 	Role     *string
 }
 
 type EmployeeUsecase interface {
 	ListEmployees(limit, offset int) ([]*domain.Employee, error)
 	GetEmployee(id string) (*domain.Employee, error)
-	CreateEmployee(employee *domain.Employee) error
+	CreateEmployee(employee *CreateEmployeeInput) (*domain.Employee, error)
 	UpdateEmployee(input *UpdateEmployeeInput) (*domain.Employee, error)
 	DeleteEmployee(id string) error
 }
@@ -42,13 +49,21 @@ func (u *employeeUsecase) GetEmployee(id string) (*domain.Employee, error) {
 	return u.repo.FindByID(id)
 }
 
-func (u *employeeUsecase) CreateEmployee(employee *domain.Employee) error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(employee.PasswordHash), bcrypt.DefaultCost)
+func (u *employeeUsecase) CreateEmployee(input *CreateEmployeeInput) (*domain.Employee, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	employee.PasswordHash = string(hashedPassword)
-	return u.repo.Create(employee)
+	employee := &domain.Employee{
+		Name:         input.Name,
+		Email:        input.Email,
+		PasswordHash: string(hashedPassword),
+		Role:         input.Role,
+	}
+	if err := u.repo.Create(employee); err != nil {
+		return nil, err
+	}
+	return employee, nil
 }
 
 func (u *employeeUsecase) UpdateEmployee(input *UpdateEmployeeInput) (*domain.Employee, error) {
