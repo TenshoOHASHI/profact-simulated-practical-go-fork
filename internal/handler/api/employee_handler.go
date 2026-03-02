@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -49,6 +50,13 @@ func (h *EmployeeHandler) CreateEmployee(c *gin.Context) {
 
 	employee, err := h.usecase.CreateEmployee(input)
 	if err != nil {
+		if errors.Is(err, usecase.ErrDuplicateEmail) {
+			c.JSON(http.StatusConflict, response.ErrorResponse{
+				Code:    409,
+				Message: err.Error(),
+			})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
 			Code:    500,
 			Message: "サーバー内部エラーが発生しました",
@@ -107,6 +115,13 @@ func (h *EmployeeHandler) UpdateEmployee(c *gin.Context) {
 	updated, err := h.usecase.UpdateEmployee(input)
 
 	if err != nil {
+		if errors.Is(err, usecase.ErrDuplicateEmail) {
+			c.JSON(http.StatusConflict, response.ErrorResponse{
+				Code:    409,
+				Message: err.Error(),
+			})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
 			Code:    500,
 			Message: "サーバー内部エラーが発生しました",

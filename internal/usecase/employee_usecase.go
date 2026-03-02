@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
 	"golang.org/x/crypto/bcrypt"
@@ -20,6 +21,15 @@ type UpdateEmployeeInput struct {
 	Email    *string
 	Password *string `json:"-"`
 	Role     *string
+}
+
+var (
+	ErrDuplicateEmail = errors.New("このメールアドレスは既に登録されています")
+)
+
+func isDuplicateError(err error) bool {
+	return strings.Contains(err.Error(), "Duplicate entry") ||
+		strings.Contains(err.Error(), "UNIQUE constraint")
 }
 
 type EmployeeUsecase interface {
@@ -61,6 +71,9 @@ func (u *employeeUsecase) CreateEmployee(input *CreateEmployeeInput) (*domain.Em
 		Role:         input.Role,
 	}
 	if err := u.repo.Create(employee); err != nil {
+		if isDuplicateError(err) {
+			return nil, ErrDuplicateEmail
+		}
 		return nil, err
 	}
 	return employee, nil
@@ -96,6 +109,9 @@ func (u *employeeUsecase) UpdateEmployee(input *UpdateEmployeeInput) (*domain.Em
 	}
 
 	if err := u.repo.Update(existing); err != nil {
+		if isDuplicateError(err) {
+			return nil, ErrDuplicateEmail
+		}
 		return nil, err
 	}
 	return existing, nil
