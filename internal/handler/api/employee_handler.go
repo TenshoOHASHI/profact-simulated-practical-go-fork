@@ -96,21 +96,15 @@ func (h *EmployeeHandler) UpdateEmployee(c *gin.Context) {
 		return
 	}
 
-	employee := &domain.Employee{ID: pathID.ID}
-	if req.Name != nil {
-		employee.Name = *req.Name
-	}
-	if req.Email != nil {
-		employee.Email = *req.Email
-	}
-	if req.Password != nil {
-		employee.PasswordHash = *req.Password
-	}
-	if req.Role != nil {
-		employee.Role = *req.Role
+	input := &usecase.UpdateEmployeeInput{
+		ID:       pathID.ID,
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: req.Password,
+		Role:     req.Role,
 	}
 
-	updated, err := h.usecase.UpdateEmployee(employee)
+	updated, err := h.usecase.UpdateEmployee(input)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{

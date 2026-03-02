@@ -7,11 +7,19 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type UpdateEmployeeInput struct {
+	ID       string
+	Name     *string
+	Email    *string
+	Password *string
+	Role     *string
+}
+
 type EmployeeUsecase interface {
 	ListEmployees(limit, offset int) ([]*domain.Employee, error)
 	GetEmployee(id string) (*domain.Employee, error)
 	CreateEmployee(employee *domain.Employee) error
-	UpdateEmployee(employee *domain.Employee) (*domain.Employee, error)
+	UpdateEmployee(input *UpdateEmployeeInput) (*domain.Employee, error)
 	DeleteEmployee(id string) error
 }
 
@@ -43,8 +51,8 @@ func (u *employeeUsecase) CreateEmployee(employee *domain.Employee) error {
 	return u.repo.Create(employee)
 }
 
-func (u *employeeUsecase) UpdateEmployee(employee *domain.Employee) (*domain.Employee, error) {
-	existing, err := u.repo.FindByID(employee.ID)
+func (u *employeeUsecase) UpdateEmployee(input *UpdateEmployeeInput) (*domain.Employee, error) {
+	existing, err := u.repo.FindByID(input.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -53,23 +61,23 @@ func (u *employeeUsecase) UpdateEmployee(employee *domain.Employee) (*domain.Emp
 		return nil, errors.New("ユーザーが見つかりません")
 	}
 
-	if employee.Name != "" {
-		existing.Name = employee.Name
+	if input.Name != nil {
+		existing.Name = *input.Name
 	}
-	if employee.Email != "" {
-		existing.Email = employee.Email
+	if input.Email != nil {
+		existing.Email = *input.Email
 	}
 
-	if employee.PasswordHash != "" {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(employee.PasswordHash), bcrypt.DefaultCost)
+	if input.Password != nil {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(*input.Password), bcrypt.DefaultCost)
 		if err != nil {
 			return nil, err
 		}
 		existing.PasswordHash = string(hashedPassword)
 	}
 
-	if employee.Role != "" {
-		existing.Role = employee.Role
+	if input.Role != nil {
+		existing.Role = *input.Role
 	}
 
 	if err := u.repo.Update(existing); err != nil {
