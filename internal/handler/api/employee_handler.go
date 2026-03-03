@@ -104,7 +104,7 @@ func (h *EmployeeHandler) UpdateEmployee(c *gin.Context) {
 		return
 	}
 
-	input := &usecase.UpdateEmployeeInput{
+	employee := &usecase.UpdateEmployeeInput{
 		ID:       pathID.ID,
 		Name:     req.Name,
 		Email:    req.Email,
@@ -112,7 +112,7 @@ func (h *EmployeeHandler) UpdateEmployee(c *gin.Context) {
 		Role:     req.Role,
 	}
 
-	updated, err := h.usecase.UpdateEmployee(input)
+	updated, err := h.usecase.UpdateEmployee(employee)
 
 	if err != nil {
 		if errors.Is(err, usecase.ErrDuplicateEmail) {

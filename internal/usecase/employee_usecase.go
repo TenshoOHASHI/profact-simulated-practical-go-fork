@@ -36,7 +36,7 @@ type EmployeeUsecase interface {
 	ListEmployees(limit, offset int) ([]*domain.Employee, error)
 	GetEmployee(id string) (*domain.Employee, error)
 	CreateEmployee(employee *CreateEmployeeInput) (*domain.Employee, error)
-	UpdateEmployee(input *UpdateEmployeeInput) (*domain.Employee, error)
+	UpdateEmployee(employee *UpdateEmployeeInput) (*domain.Employee, error)
 	DeleteEmployee(id string) error
 }
 
