@@ -115,6 +115,14 @@ func (h *PropertyHandler) UpdateProperty(c *gin.Context) {
 		return
 	}
 
+	if req.Name == "" && req.Rent == 0 && req.Address == "" && req.Layout == nil && req.Status == "" {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "更新するフィールドを指定してください",
+		})
+		return
+	}
+
 	property := &domain.Property{
 		ID:      pathID.ID,
 		Name:    req.Name,

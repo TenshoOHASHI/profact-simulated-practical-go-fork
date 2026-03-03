@@ -124,6 +124,14 @@ func (h *CustomerHandler) UpdateCustomer(c *gin.Context) {
 		return
 	}
 
+	if req.Name == "" && req.Email == nil && req.Phone == nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "更新するフィールドを指定してください",
+		})
+		return
+	}
+
 	customer := &domain.Customer{
 		ID:    pathID.ID,
 		Name:  req.Name,

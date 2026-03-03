@@ -123,6 +123,14 @@ func (h *DealHandler) UpdateDeal(c *gin.Context) {
 		moveInDate = &parsed
 	}
 
+	if req.CustomerID == "" && req.PropertyID == nil && req.AssigneeID == nil && req.Status == "" && req.MoveInDate == nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			Code:    400,
+			Message: "更新するフィールドを指定してください",
+		})
+		return
+	}
+
 	deal := &domain.Deal{
 		ID:         pathID.ID,
 		CustomerID: req.CustomerID,

@@ -35,11 +35,13 @@ func main() {
 	customerRepo := repository.NewCustomerRepository(db)
 	propertyRepo := repository.NewPropertyRepository(db)
 	dealRepo := repository.NewDealRepository(db)
+	employeeRepo := repository.NewEmployeeRepository(db)
 
 	// DI: ユースケース
 	customerUC := usecase.NewCustomerUsecase(customerRepo)
 	propertyUC := usecase.NewPropertyUsecase(propertyRepo)
 	dealUC := usecase.NewDealUsecase(dealRepo)
+	employeeUC := usecase.NewEmployeeUsecase(employeeRepo)
 
 	// Validator: バリデーション
 	v := validator.NewValidator()
@@ -47,6 +49,7 @@ func main() {
 	customerHandler := api.NewCustomerHandler(customerUC, v)
 	propertyHandler := api.NewPropertyHandler(propertyUC, v)
 	dealHandler := api.NewDealHandler(dealUC, v)
+	employeeHandler := api.NewEmployeeHandler(employeeUC, v)
 
 	r := gin.Default()
 
@@ -84,6 +87,15 @@ func main() {
 			deals.PUT("/:id", dealHandler.UpdateDeal)
 			deals.DELETE("/:id", dealHandler.DeleteDeal)
 			deals.PATCH("/:id/status", dealHandler.UpdateDealStatus)
+		}
+
+		employees := apiRoutes.Group("/employees")
+		{
+			employees.GET("", employeeHandler.ListEmployees)
+			employees.POST("", employeeHandler.CreateEmployee)
+			employees.GET("/:id", employeeHandler.GetEmployee)
+			employees.PUT("/:id", employeeHandler.UpdateEmployee)
+			employees.DELETE("/:id", employeeHandler.DeleteEmployee)
 		}
 	}
 
