@@ -24,7 +24,7 @@ type UpdateEmployeeInput struct {
 }
 
 var (
-	ErrDuplicateEmail = errors.New("このメールアドレスは既に登録されています")
+	ErrDuplicateEmail = errors.New("このメールアドレスは使用不可です")
 )
 
 func isDuplicateError(err error) bool {
