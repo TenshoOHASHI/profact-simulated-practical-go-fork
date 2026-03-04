@@ -71,8 +71,8 @@ func (h *DealHandler) CreateDeal(c *gin.Context) {
 	moveInDate, _ := time.Parse("2006-01-02T15:04:05Z", req.MoveInDate)
 	deal := &domain.Deal{
 		CustomerID: req.CustomerID,
-		PropertyID: &propertyID,
-		AssigneeID: &assigneeID,
+		PropertyID: propertyID,
+		AssigneeID: assigneeID,
 		Status:     req.Status,
 		MoveInDate: &moveInDate,
 	}
