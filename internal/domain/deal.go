@@ -8,6 +8,8 @@ type Deal struct {
 	ID           string     `json:"id"`
 	CustomerID   string     `json:"customer_id"`
 	CustomerName string     `json:"customer_name,omitempty"` // JOINなどで取得した場合
+	PropertyName *string    `json:"property_name,omitempty"`
+	AssigneeName *string    `json:"assignee_name,omitempty"`
 	PropertyID   *string    `json:"property_id"`
 	AssigneeID   *string    `json:"assignee_id"`
 	Status       string     `json:"status"`

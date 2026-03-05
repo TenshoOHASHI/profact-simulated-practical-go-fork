@@ -19,9 +19,13 @@ func (r *dealRepository) FindAll() ([]*domain.Deal, error) {
 	query := `
 		SELECT
 			d.id, d.customer_id, d.property_id, d.assignee_id, d.status, d.move_in_date, d.created_at, d.updated_at,
-			c.name as customer_name
+			c.name as customer_name,
+			p.name as property_name,
+			e.name as assignee_name
 		FROM deals d
 		JOIN customers c ON d.customer_id = c.id
+		LEFT JOIN properties p ON d.property_id = p.id
+  	    LEFT JOIN employees e ON d.assignee_id = e.id
 		ORDER BY d.created_at DESC`
 
 	rows, err := r.db.Query(query)
@@ -43,6 +47,8 @@ func (r *dealRepository) FindAll() ([]*domain.Deal, error) {
 			&deal.CreatedAt,
 			&deal.UpdatedAt,
 			&deal.CustomerName,
+			&deal.PropertyName,
+			&deal.AssigneeName,
 		); err != nil {
 			return nil, err
 		}
@@ -55,9 +61,13 @@ func (r *dealRepository) FindByID(id string) (*domain.Deal, error) {
 	query := `
 		SELECT
 			d.id, d.customer_id, d.property_id, d.assignee_id, d.status, d.move_in_date, d.created_at, d.updated_at,
-			c.name as customer_name
+			c.name as customer_name,
+			p.name as property_name,
+			e.name as assignee_name
 		FROM deals d
 		JOIN customers c ON d.customer_id = c.id
+		LEFT JOIN properties p ON d.property_id = p.id
+  		LEFT JOIN employees e ON d.assignee_id = e.id
 		WHERE d.id = ? LIMIT 1`
 
 	deal := &domain.Deal{}
@@ -71,6 +81,8 @@ func (r *dealRepository) FindByID(id string) (*domain.Deal, error) {
 		&deal.CreatedAt,
 		&deal.UpdatedAt,
 		&deal.CustomerName,
+		&deal.PropertyName,
+		&deal.AssigneeName,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
