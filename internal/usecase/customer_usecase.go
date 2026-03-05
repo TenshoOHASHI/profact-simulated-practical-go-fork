@@ -7,7 +7,7 @@ import (
 )
 
 type CustomerUsecase interface {
-	ListCustomers(limit, offset int) ([]*domain.Customer, error)
+	ListCustomers(limit, offset int, keyword string) (*domain.CustomerListResult, error)
 	GetCustomer(id string) (*domain.Customer, error)
 	CreateCustomer(customer *domain.Customer) error
 	UpdateCustomer(customer *domain.Customer) (*domain.Customer, error)
@@ -22,8 +22,21 @@ func NewCustomerUsecase(repo domain.CustomerRepository) CustomerUsecase {
 	return &customerUsecase{repo: repo}
 }
 
-func (u *customerUsecase) ListCustomers(limit, offset int) ([]*domain.Customer, error) {
-	return u.repo.FindAll(limit, offset)
+func (u *customerUsecase) ListCustomers(limit, offset int, keyword string) (*domain.CustomerListResult, error) {
+	customers, err := u.repo.FindAll(limit, offset, keyword)
+	if err != nil {
+		return nil, err
+	}
+	totalCount, err := u.repo.Count(keyword)
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.CustomerListResult{
+		TotalCount: totalCount,
+		Data:       customers,
+	}, nil
+
 }
 
 func (u *customerUsecase) GetCustomer(id string) (*domain.Customer, error) {

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -24,6 +25,9 @@ func NewCustomerHandler(u usecase.CustomerUsecase, v *validator.Validate) *Custo
 func (h *CustomerHandler) ListCustomers(c *gin.Context) {
 	limitStr := c.DefaultQuery("limit", "20")
 	offsetStr := c.DefaultQuery("offset", "0")
+	keyword := c.Query("keyword")
+
+	fmt.Println("offset", offsetStr, limitStr, keyword)
 
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
@@ -36,7 +40,7 @@ func (h *CustomerHandler) ListCustomers(c *gin.Context) {
 		return
 	}
 
-	customers, err := h.usecase.ListCustomers(limit, offset)
+	customers, err := h.usecase.ListCustomers(limit, offset, keyword)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
