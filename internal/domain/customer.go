@@ -13,8 +13,14 @@ type Customer struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type CustomerListResult struct {
+	TotalCount int         `json:"total_count"`
+	Data       []*Customer `json:"data"`
+}
+
 type CustomerRepository interface {
-	FindAll(limit, offset int) ([]*Customer, error)
+	FindAll(limit, offset int, keyword string) ([]*Customer, error)
+	Count(keyword string) (int, error)
 	FindByID(id string) (*Customer, error)
 	Create(customer *Customer) error
 	Update(customer *Customer) error

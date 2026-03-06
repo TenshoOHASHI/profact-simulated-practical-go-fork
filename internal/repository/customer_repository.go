@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+
 	"github.com/google/uuid"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
 )
@@ -14,9 +15,18 @@ func NewCustomerRepository(db *sql.DB) domain.CustomerRepository {
 	return &customerRepository{db: db}
 }
 
-func (r *customerRepository) FindAll(limit, offset int) ([]*domain.Customer, error) {
-	query := `SELECT id, name, email, phone, created_at, updated_at FROM customers ORDER BY created_at DESC LIMIT ? OFFSET ?`
-	rows, err := r.db.Query(query, limit, offset)
+func (r *customerRepository) FindAll(limit, offset int, keyword string) ([]*domain.Customer, error) {
+	query := `SELECT id, name, email, phone, created_at, updated_at FROM customers`
+	var args []interface{}
+	if keyword != "" {
+		query += ` WHERE name LIKE ?`
+		args = append(args, "%"+keyword+"%")
+	}
+
+	query += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`
+	args = append(args, limit, offset)
+
+	rows, err := r.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -38,6 +48,20 @@ func (r *customerRepository) FindAll(limit, offset int) ([]*domain.Customer, err
 		customers = append(customers, customer)
 	}
 	return customers, nil
+}
+
+func (r *customerRepository) Count(keyword string) (int, error) {
+	query := `SELECT COUNT(*) FROM customers`
+	var args []interface{}
+
+	if keyword != "" {
+		query += ` WHERE name LIKE ?`
+		args = append(args, "%"+keyword+"%")
+	}
+
+	var count int
+	err := r.db.QueryRow(query, args...).Scan(&count)
+	return count, err
 }
 
 func (r *customerRepository) FindByID(id string) (*domain.Customer, error) {
