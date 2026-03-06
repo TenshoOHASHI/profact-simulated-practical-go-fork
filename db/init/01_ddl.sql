@@ -10,9 +10,9 @@ CREATE TABLE employees (
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(50) NOT NULL, -- 'admin', 'manager', 'agent'
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL
 );
-
 -- 2. 顧客 (customers)
 CREATE TABLE customers (
     id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
@@ -20,7 +20,10 @@ CREATE TABLE customers (
     email VARCHAR(255),
     phone VARCHAR(50),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL
+
+
 );
 
 -- 3. 物件 (properties)
@@ -32,7 +35,9 @@ CREATE TABLE properties (
     layout VARCHAR(50),
     status VARCHAR(50) DEFAULT 'available',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL
+
 );
 
 -- 4. 案件・パイプライン (deals)
@@ -45,9 +50,12 @@ CREATE TABLE deals (
     move_in_date DATE, -- 入居希望時期・予定日
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL,
+
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
     FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE SET NULL,
     FOREIGN KEY (assignee_id) REFERENCES employees(id) ON DELETE SET NULL
+
 );
 
 -- インデックス作成
