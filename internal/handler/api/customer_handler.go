@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -26,8 +25,6 @@ func (h *CustomerHandler) ListCustomers(c *gin.Context) {
 	limitStr := c.DefaultQuery("limit", "20")
 	offsetStr := c.DefaultQuery("offset", "0")
 	keyword := c.Query("keyword")
-
-	fmt.Println("offset", offsetStr, limitStr, keyword)
 
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
