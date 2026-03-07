@@ -110,7 +110,7 @@ func (r *dealRepository) Update(deal *domain.Deal) error {
 }
 
 func (r *dealRepository) UpdateStatus(id, status string) error {
-	query := `UPDATE deals SET status = ?, assignee_id = ? WHERE id = ?`
+	query := `UPDATE deals SET status = ? WHERE id = ? AND deleted_at IS NULL`
 	_, err := r.db.Exec(query, status, id)
 	return err
 }
