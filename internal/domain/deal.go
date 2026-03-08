@@ -16,6 +16,7 @@ type Deal struct {
 	MoveInDate   *time.Time `json:"move_in_date"`
 	CreatedAt    time.Time  `json:"created_at"`
 	UpdatedAt    time.Time  `json:"updated_at"`
+	DeletedAt    *time.Time `json:"deleted_at,omitempty"`
 }
 
 type DealRepository interface {

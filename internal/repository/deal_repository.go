@@ -23,9 +23,10 @@ func (r *dealRepository) FindAll() ([]*domain.Deal, error) {
 			p.name as property_name,
 			e.name as assignee_name
 		FROM deals d
-		JOIN customers c ON d.customer_id = c.id
-		LEFT JOIN properties p ON d.property_id = p.id
-  	    LEFT JOIN employees e ON d.assignee_id = e.id
+		JOIN customers c ON d.customer_id = c.id AND c.deleted_at IS NULL
+		LEFT JOIN properties p ON d.property_id = p.id AND p.deleted_at IS NULL
+  	    LEFT JOIN employees e ON d.assignee_id = e.id AND e.deleted_at IS NULL
+		WHERE d.deleted_at IS NULL
 		ORDER BY d.created_at DESC`
 
 	rows, err := r.db.Query(query)
@@ -65,10 +66,10 @@ func (r *dealRepository) FindByID(id string) (*domain.Deal, error) {
 			p.name as property_name,
 			e.name as assignee_name
 		FROM deals d
-		JOIN customers c ON d.customer_id = c.id
-		LEFT JOIN properties p ON d.property_id = p.id
-  		LEFT JOIN employees e ON d.assignee_id = e.id
-		WHERE d.id = ? LIMIT 1`
+		JOIN customers c ON d.customer_id = c.id AND c.deleted_at IS NULL
+		LEFT JOIN properties p ON d.property_id = p.id AND p.deleted_at IS NULL
+  		LEFT JOIN employees e ON d.assignee_id = e.id AND e.deleted_at IS NULL
+		WHERE d.id = ? AND d.deleted_at IS NULL LIMIT 1`
 
 	deal := &domain.Deal{}
 	err := r.db.QueryRow(query, id).Scan(
@@ -103,19 +104,19 @@ func (r *dealRepository) Create(deal *domain.Deal) error {
 }
 
 func (r *dealRepository) Update(deal *domain.Deal) error {
-	query := `UPDATE deals SET customer_id = ?, property_id = ?, assignee_id = ?, status = ?, move_in_date = ? WHERE id = ?`
+	query := `UPDATE deals SET customer_id = ?, property_id = ?, assignee_id = ?, status = ?, move_in_date = ? WHERE id = ? AND deleted_at IS NULL`
 	_, err := r.db.Exec(query, deal.CustomerID, deal.PropertyID, deal.AssigneeID, deal.Status, deal.MoveInDate, deal.ID)
 	return err
 }
 
 func (r *dealRepository) UpdateStatus(id, status string) error {
-	query := `UPDATE deals SET status = ?, assignee_id = ? WHERE id = ?`
+	query := `UPDATE deals SET status = ? WHERE id = ? AND deleted_at IS NULL`
 	_, err := r.db.Exec(query, status, id)
 	return err
 }
 
 func (r *dealRepository) Delete(id string) error {
-	query := `DELETE FROM deals WHERE id = ?`
+	query := `UPDATE deals SET deleted_at= NOW() WHERE id = ? AND deleted_at IS NULL`
 	_, err := r.db.Exec(query, id)
 	return err
 }

@@ -16,10 +16,10 @@ func NewCustomerRepository(db *sql.DB) domain.CustomerRepository {
 }
 
 func (r *customerRepository) FindAll(limit, offset int, keyword string) ([]*domain.Customer, error) {
-	query := `SELECT id, name, email, phone, created_at, updated_at FROM customers`
+	query := `SELECT id, name, email, phone, created_at, updated_at FROM customers WHERE deleted_at IS NULL`
 	var args []interface{}
 	if keyword != "" {
-		query += ` WHERE name LIKE ?`
+		query += ` AND name LIKE ?`
 		args = append(args, "%"+keyword+"%")
 	}
 
@@ -51,11 +51,11 @@ func (r *customerRepository) FindAll(limit, offset int, keyword string) ([]*doma
 }
 
 func (r *customerRepository) Count(keyword string) (int, error) {
-	query := `SELECT COUNT(*) FROM customers`
+	query := `SELECT COUNT(*) FROM customers WHERE deleted_at IS NULL`
 	var args []interface{}
 
 	if keyword != "" {
-		query += ` WHERE name LIKE ?`
+		query += ` AND name LIKE ?`
 		args = append(args, "%"+keyword+"%")
 	}
 
@@ -65,7 +65,7 @@ func (r *customerRepository) Count(keyword string) (int, error) {
 }
 
 func (r *customerRepository) FindByID(id string) (*domain.Customer, error) {
-	query := `SELECT id, name, email, phone, created_at, updated_at FROM customers WHERE id = ? LIMIT 1`
+	query := `SELECT id, name, email, phone, created_at, updated_at FROM customers WHERE id = ? AND deleted_at IS NULL LIMIT 1`
 	customer := &domain.Customer{}
 	err := r.db.QueryRow(query, id).Scan(
 		&customer.ID,
@@ -94,13 +94,13 @@ func (r *customerRepository) Create(customer *domain.Customer) error {
 }
 
 func (r *customerRepository) Update(customer *domain.Customer) error {
-	query := `UPDATE customers SET name = ?, email = ?, phone = ? WHERE id = ?`
+	query := `UPDATE customers SET name = ?, email = ?, phone = ? WHERE id = ? AND deleted_at IS NULL`
 	_, err := r.db.Exec(query, customer.Name, customer.Email, customer.Phone, customer.ID)
 	return err
 }
 
 func (r *customerRepository) Delete(id string) error {
-	query := `DELETE FROM customers WHERE id = ?`
+	query := `UPDATE customers SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL`
 	_, err := r.db.Exec(query, id)
 	return err
 }

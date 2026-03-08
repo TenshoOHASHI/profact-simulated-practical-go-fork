@@ -1,0 +1,7 @@
+SET NAMES utf8mb4;
+
+
+ALTER TABLE employees ADD COLUMN deleted_at DATETIME NULL;
+ALTER TABLE customers ADD COLUMN deleted_at DATETIME NULL;
+ALTER TABLE properties ADD COLUMN deleted_at DATETIME NULL;
+ALTER TABLE deals ADD COLUMN deleted_at DATETIME NULL;

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+
 	"github.com/google/uuid"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
 )
@@ -15,7 +16,7 @@ func NewPropertyRepository(db *sql.DB) domain.PropertyRepository {
 }
 
 func (r *propertyRepository) FindAll() ([]*domain.Property, error) {
-	query := `SELECT id, name, rent, address, layout, status, created_at, updated_at FROM properties ORDER BY created_at DESC`
+	query := `SELECT id, name, rent, address, layout, status, created_at, updated_at FROM properties WHERE deleted_at IS NULL ORDER BY created_at DESC`
 	rows, err := r.db.Query(query)
 	if err != nil {
 		return nil, err
@@ -43,7 +44,7 @@ func (r *propertyRepository) FindAll() ([]*domain.Property, error) {
 }
 
 func (r *propertyRepository) FindByID(id string) (*domain.Property, error) {
-	query := `SELECT id, name, rent, address, layout, status, created_at, updated_at FROM properties WHERE id = ? LIMIT 1`
+	query := `SELECT id, name, rent, address, layout, status, created_at, updated_at FROM properties WHERE id = ? AND deleted_at IS NULL LIMIT 1`
 	property := &domain.Property{}
 	err := r.db.QueryRow(query, id).Scan(
 		&property.ID,
@@ -74,13 +75,13 @@ func (r *propertyRepository) Create(property *domain.Property) error {
 }
 
 func (r *propertyRepository) Update(property *domain.Property) error {
-	query := `UPDATE properties SET name = ?, rent = ?, address = ?, layout = ?, status = ? WHERE id = ?`
+	query := `UPDATE properties SET name = ?, rent = ?, address = ?, layout = ?, status = ? WHERE id = ? AND deleted_at IS NULL`
 	_, err := r.db.Exec(query, property.Name, property.Rent, property.Address, property.Layout, property.Status, property.ID)
 	return err
 }
 
 func (r *propertyRepository) Delete(id string) error {
-	query := `DELETE FROM properties WHERE id = ?`
+	query := `UPDATE properties SET deleted_at=NOW() WHERE id = ? AND deleted_at IS NULL`
 	_, err := r.db.Exec(query, id)
 	return err
 }

@@ -25,19 +25,19 @@ func (r *employeeRepository) Create(employee *domain.Employee) error {
 }
 
 func (r *employeeRepository) Update(employee *domain.Employee) error {
-	query := `UPDATE employees SET name = ?, email = ?, password_hash = ?, role = ? WHERE id = ?`
+	query := `UPDATE employees SET name = ?, email = ?, password_hash = ?, role = ? WHERE id = ? AND deleted_at IS NULL`
 	_, err := r.db.Exec(query, employee.Name, employee.Email, employee.PasswordHash, employee.Role, employee.ID)
 	return err
 }
 
 func (r *employeeRepository) Delete(id string) error {
-	query := `DELETE FROM employees WHERE id = ?`
+	query := `UPDATE employees SET deleted_at=NOW() WHERE id = ? AND deleted_at IS NULL`
 	_, err := r.db.Exec(query, id)
 	return err
 }
 
 func (r *employeeRepository) FindAll(limit, offset int) ([]*domain.Employee, error) {
-	query := `SELECT id, name, email, role, created_at, updated_at FROM employees ORDER BY created_at DESC LIMIT ? OFFSET ?`
+	query := `SELECT id, name, email, role, created_at, updated_at FROM employees WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT ? OFFSET ?`
 	rows, err := r.db.Query(query, limit, offset)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (r *employeeRepository) FindAll(limit, offset int) ([]*domain.Employee, err
 }
 
 func (r *employeeRepository) FindByID(id string) (*domain.Employee, error) {
-	query := `SELECT id, name, email, role, created_at, updated_at FROM employees WHERE id = ? LIMIT 1`
+	query := `SELECT id, name, email, role, created_at, updated_at FROM employees WHERE id = ? AND deleted_at IS NULL LIMIT 1`
 	employee := &domain.Employee{}
 	err := r.db.QueryRow(query, id).Scan(
 		&employee.ID,
