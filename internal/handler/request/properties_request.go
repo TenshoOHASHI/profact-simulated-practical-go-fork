@@ -14,3 +14,29 @@ type UpdatePropertyRequest struct {
 	Layout  *string `json:"layout" validate:"omitempty,max=50"`
 	Status  string  `json:"status" validate:"omitempty,oneof=available contracted hidden"`
 }
+
+type CSVRow struct {
+	LineNumber int
+	Name       string
+	Rent       int
+	Address    string
+	Layout     string
+	Status     string
+}
+
+type ValidationError struct {
+	Row     int    `json:"row"`
+	Field   string `json:"field"`
+	Message string `json:"message"`
+}
+
+type ImportResult struct {
+	ImportedCount int           `json:"imported_count"`
+	SkippedCount  int           `json:"skipped_count"`
+	SkippedItems  []SkippedItem `json:"skipped_details,omitempty"`
+}
+
+type SkippedItem struct {
+	Row    int    `json:"row"`
+	Reason string `json:"reason"`
+}
