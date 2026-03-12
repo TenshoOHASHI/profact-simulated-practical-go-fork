@@ -209,8 +209,6 @@ func (h *PropertyHandler) ImportProperties(c *gin.Context) {
 func (h *PropertyHandler) ExportProperties(c *gin.Context) {
 	csvData, err := h.usecase.ExportProperties()
 	if err != nil {
-		// デバッグ用: エラー詳細を出力
-		fmt.Printf("Export error: %v\n", err)
 		if err.Error() == "no data" {
 			c.JSON(http.StatusNotFound, response.ErrorResponse{
 				Code:    404,
