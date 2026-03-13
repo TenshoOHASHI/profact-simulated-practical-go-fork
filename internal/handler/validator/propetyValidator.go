@@ -94,14 +94,13 @@ func ValidateCSRow(row []string, lineNumber int) []request.ValidationError {
 	}
 	status := strings.TrimSpace(row[4])
 	validStatuses := map[string]bool{
-		"new_lead": true, "following_up": true, "viewing_scheduled": true,
-		"applying": true, "contracted": true, "lost）": true,
+		"available": true, "contracted": true, "hidden": true,
 	}
 	if status != "" && !validStatuses[status] {
 		errors = append(errors, request.ValidationError{
 			Row:     lineNumber,
 			Field:   "status",
-			Message: "ステータスが不正です（有効: new_lead/following_up/viewing_scheduled/applying/contracted/lost）",
+			Message: "ステータスが不正です（有効: available/contracted/hidden）",
 		})
 	}
 
