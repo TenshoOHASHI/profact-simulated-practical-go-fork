@@ -111,17 +111,18 @@ func (u *propertyUsecase) ImportProperties(file multipart.File) (*request.Import
 	if err != nil {
 		return nil, nil, err
 	}
-	lineNumber := 2
+	lineNumber := 1
 	for {
 		row, err := reader.Read()
 		if err == io.EOF {
 			break
 		}
 
+		lineNumber++
+
 		errs := validator.ValidateCSRow(row, lineNumber)
 		if len(errs) > 0 {
 			errors = append(errors, errs...)
-			lineNumber++
 		}
 
 		key := row[0] + "|" + row[2]
@@ -131,7 +132,6 @@ func (u *propertyUsecase) ImportProperties(file multipart.File) (*request.Import
 				Row:    lineNumber,
 				Reason: fmt.Sprintf("CSV内で重複（物件名：%s）", row[0]),
 			})
-			lineNumber++
 			continue
 		}
 		seen[key] = true
@@ -142,7 +142,6 @@ func (u *propertyUsecase) ImportProperties(file multipart.File) (*request.Import
 				Row:    lineNumber,
 				Reason: fmt.Sprintf("既に登録済み（物件名：%s）", row[0]),
 			})
-			lineNumber++
 			continue
 		}
 		layout := row[3]
@@ -154,6 +153,7 @@ func (u *propertyUsecase) ImportProperties(file multipart.File) (*request.Import
 			Status:  row[4],
 		})
 	}
+
 	if len(errors) > 0 {
 		return nil, errors, nil
 	}

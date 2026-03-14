@@ -7,6 +7,8 @@ import (
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/handler/request"
 )
 
+const maxImportRows = 10000
+
 func ParseInt(s string) int {
 	val, err := strconv.Atoi(strings.TrimSpace(s))
 	if err != nil {
@@ -92,15 +94,30 @@ func ValidateCSRow(row []string, lineNumber int) []request.ValidationError {
 			Message: "間取りは50文字以内で入力してください",
 		})
 	}
+
 	status := strings.TrimSpace(row[4])
-	validStatuses := map[string]bool{
-		"available": true, "contracted": true, "hidden": true,
-	}
-	if status != "" && !validStatuses[status] {
+	if status == "" {
 		errors = append(errors, request.ValidationError{
 			Row:     lineNumber,
 			Field:   "status",
-			Message: "ステータスが不正です（有効: available/contracted/hidden）",
+			Message: "ステータスは必須です",
+		})
+	} else {
+		validStatuses := map[string]bool{"available": true, "contracted": true, "hidden": true}
+		if !validStatuses[status] {
+			errors = append(errors, request.ValidationError{
+				Row:     lineNumber,
+				Field:   "status",
+				Message: "ステータスが不正です（有効: available/contracted/hidden）",
+			})
+		}
+	}
+
+	if lineNumber-1 > maxImportRows {
+		errors = append(errors, request.ValidationError{
+			Row:     lineNumber,
+			Field:   "file",
+			Message: "データ件数が上限を超えています（最大10,000件）",
 		})
 	}
 
