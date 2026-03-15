@@ -85,3 +85,33 @@ func (r *propertyRepository) Delete(id string) error {
 	_, err := r.db.Exec(query, id)
 	return err
 }
+
+func (r *propertyRepository) BulkCreateWithIgnore(properties []*domain.Property) (int64, error) {
+	if len(properties) == 0 {
+		return 0, nil
+	}
+	tx, err := r.db.Begin()
+	if err != nil {
+		return 0, nil
+	}
+	defer tx.Rollback()
+	var totalInserted int64
+
+	for _, p := range properties {
+		if p.ID == "" {
+			p.ID = uuid.NewString()
+		}
+		result, err := tx.Exec(
+			`INSERT IGNORE INTO properties (id, name, rent, address, layout, status) VALUES (?, ?, ?, ?, ?, ?)`,
+			p.ID, p.Name, p.Rent, p.Address, p.Layout, p.Status,
+		)
+		if err != nil {
+			return 0, err
+		}
+		n, _ := result.RowsAffected()
+		totalInserted += n
+
+	}
+
+	return totalInserted, tx.Commit()
+}

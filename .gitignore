@@ -31,7 +31,8 @@ go.work.sum
 01_docs
 02_scripts
 data
-
+temp
+docs
 # Editor/IDE
 # .idea/
 # .vscode/
