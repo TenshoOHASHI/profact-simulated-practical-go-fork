@@ -37,6 +37,6 @@ type ImportResult struct {
 }
 
 type SkippedItem struct {
-	Row    int    `json:"row"`
+	Row    int    `json:"row,omitempty"`
 	Reason string `json:"reason"`
 }

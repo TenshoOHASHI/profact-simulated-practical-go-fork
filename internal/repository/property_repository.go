@@ -3,7 +3,6 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
@@ -88,58 +87,35 @@ func (r *propertyRepository) Delete(id string) error {
 	return err
 }
 
-func (r *propertyRepository) GetExistingPropertiesMap() (map[string]bool, error) {
-	query := `SELECT name ,address FROM properties WHERE deleted_at IS NULL`
-	rows, err := r.db.Query(query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	existing := make(map[string]bool)
-	for rows.Next() {
-		var name, address string
-		if err := rows.Scan(&name, &address); err != nil {
-			return nil, err
-		}
-		key := name + "|" + address
-		existing[key] = true
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return existing, nil
-}
-
-func (r *propertyRepository) BulkCreate(properties []*domain.Property) error {
+func (r *propertyRepository) BulkCreateWithIgnore(properties []*domain.Property) (int64, error) {
 	if len(properties) == 0 {
-		return nil
+		return 0, nil
 	}
 	tx, err := r.db.Begin()
 	if err != nil {
-		return err
+		return 0, nil
 	}
 	defer tx.Rollback()
-	valueStrings := make([]string, 0, len(properties))
-	valueArgs := make([]interface{}, 0, len(properties))
+	var totalInserted int64
 
 	for _, p := range properties {
 		if p.ID == "" {
 			p.ID = uuid.NewString()
 		}
-		valueStrings = append(valueStrings, "(?,?,?,?,?,?)")
-		valueArgs = append(valueArgs, p.ID, p.Name, p.Rent, p.Address, p.Layout, p.Status)
+		result, err := tx.Exec(
+			`INSERT IGNORE INTO properties (id, name, rent, address, layout, status) VALUES (?, ?, ?, ?, ?, ?)`,
+			p.ID, p.Name, p.Rent, p.Address, p.Layout, p.Status,
+		)
+		if err != nil {
+			return 0, err
+		}
+		n, _ := result.RowsAffected()
+		totalInserted += n
 
 	}
-	query := fmt.Sprintf(
-		"INSERT INTO properties (id, name, rent, address, layout, status) VALUES %s",
-		strings.Join(valueStrings, ","),
-	)
-	_, err = tx.Exec(query, valueArgs...)
 
-	if err != nil {
-		return err
-	}
-	return tx.Commit()
+	// デバッグ: 試行件数 vs 成功件数
+	fmt.Printf("DEBUG: attempted=%d, inserted=%d, skipped=%d\n",
+		len(properties), totalInserted, len(properties)-int(totalInserted))
+	return totalInserted, tx.Commit()
 }

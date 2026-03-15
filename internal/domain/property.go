@@ -22,6 +22,5 @@ type PropertyRepository interface {
 	Create(property *Property) error
 	Update(property *Property) error
 	Delete(id string) error
-	BulkCreate(properties []*Property) error
-	GetExistingPropertiesMap() (map[string]bool, error)
+	BulkCreateWithIgnore(properties []*Property) (int64, error)
 }

@@ -24,6 +24,7 @@ func ValidateCSRow(row []string, lineNumber int) []request.ValidationError {
 			Field:   "row",
 			Message: "カラム数が不足しています",
 		})
+		return errors
 	}
 
 	name := strings.TrimSpace(row[0])

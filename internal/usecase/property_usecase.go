@@ -97,20 +97,16 @@ func (u *propertyUsecase) ImportProperties(file multipart.File) (*request.Import
 	decoder := japanese.ShiftJIS.NewDecoder()
 	reader := csv.NewReader(decoder.Reader(file))
 
-	existingMap, err := u.repo.GetExistingPropertiesMap()
-	if err != nil {
-		return nil, nil, err
-	}
-
 	var properties []*domain.Property
 	var errors []request.ValidationError
-	seen := make(map[string]bool)
+	seen := make(map[string]int)
 	result := &request.ImportResult{}
 
-	_, err = reader.Read()
+	_, err := reader.Read()
 	if err != nil {
 		return nil, nil, err
 	}
+
 	lineNumber := 1
 	for {
 		row, err := reader.Read()
@@ -120,13 +116,14 @@ func (u *propertyUsecase) ImportProperties(file multipart.File) (*request.Import
 
 		lineNumber++
 
-		errs := validator.ValidateCSRow(row, lineNumber)
-		if len(errs) > 0 {
+		if errs := validator.ValidateCSRow(row, lineNumber); len(errs) > 0 {
 			errors = append(errors, errs...)
+			continue
 		}
 
 		key := row[0] + "|" + row[2]
-		if seen[key] {
+
+		if _, exists := seen[key]; exists {
 			result.SkippedCount++
 			result.SkippedItems = append(result.SkippedItems, request.SkippedItem{
 				Row:    lineNumber,
@@ -134,16 +131,8 @@ func (u *propertyUsecase) ImportProperties(file multipart.File) (*request.Import
 			})
 			continue
 		}
-		seen[key] = true
+		seen[key] = lineNumber
 
-		if existingMap[key] {
-			result.SkippedCount++
-			result.SkippedItems = append(result.SkippedItems, request.SkippedItem{
-				Row:    lineNumber,
-				Reason: fmt.Sprintf("既に登録済み（物件名：%s）", row[0]),
-			})
-			continue
-		}
 		layout := row[3]
 		properties = append(properties, &domain.Property{
 			Name:    row[0],
@@ -159,13 +148,21 @@ func (u *propertyUsecase) ImportProperties(file multipart.File) (*request.Import
 	}
 
 	if len(properties) > 0 {
-		if err := u.repo.BulkCreate(properties); err != nil {
+		inserted, err := u.repo.BulkCreateWithIgnore(properties)
+		if err != nil {
 			return nil, nil, err
 		}
-	}
-	result.ImportedCount = len(properties)
-	return result, nil, nil
+		result.ImportedCount = int(inserted)
 
+		dbSkipped := len(properties) - int(inserted)
+		result.SkippedCount += dbSkipped
+		if dbSkipped > 0 {
+			result.SkippedItems = append(result.SkippedItems, request.SkippedItem{
+				Reason: fmt.Sprintf("既存データと重複（%d件）", dbSkipped),
+			})
+		}
+	}
+	return result, nil, nil
 }
 
 func (u *propertyUsecase) ExportProperties() ([]byte, error) {
