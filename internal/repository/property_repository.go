@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
@@ -114,8 +113,5 @@ func (r *propertyRepository) BulkCreateWithIgnore(properties []*domain.Property)
 
 	}
 
-	// デバッグ: 試行件数 vs 成功件数
-	fmt.Printf("DEBUG: attempted=%d, inserted=%d, skipped=%d\n",
-		len(properties), totalInserted, len(properties)-int(totalInserted))
 	return totalInserted, tx.Commit()
 }
