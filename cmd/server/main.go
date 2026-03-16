@@ -77,6 +77,9 @@ func main() {
 			properties.GET("/:id", propertyHandler.GetProperty)
 			properties.PUT("/:id", propertyHandler.UpdateProperty)
 			properties.DELETE("/:id", propertyHandler.DeleteProperty)
+
+			properties.POST("/import", propertyHandler.ImportProperties)
+			properties.GET("/export", propertyHandler.ExportProperties)
 		}
 
 		deals := apiRoutes.Group("/deals")
@@ -96,6 +99,7 @@ func main() {
 			employees.GET("/:id", employeeHandler.GetEmployee)
 			employees.PUT("/:id", employeeHandler.UpdateEmployee)
 			employees.DELETE("/:id", employeeHandler.DeleteEmployee)
+
 		}
 	}
 

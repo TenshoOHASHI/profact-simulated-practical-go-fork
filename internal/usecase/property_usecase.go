@@ -1,9 +1,17 @@
 package usecase
 
 import (
+	"bytes"
+	"encoding/csv"
 	"errors"
+	"fmt"
+	"io"
+	"mime/multipart"
 
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
+	"github.com/yamu-studio/profact-simulated-practical-go/internal/handler/request"
+	"github.com/yamu-studio/profact-simulated-practical-go/internal/handler/validator"
+	"golang.org/x/text/encoding/japanese"
 )
 
 // 簡易的なステータスバリデーション例
@@ -19,6 +27,8 @@ type PropertyUsecase interface {
 	CreateProperty(property *domain.Property) error
 	UpdateProperty(property *domain.Property) (*domain.Property, error)
 	DeleteProperty(id string) error
+	ImportProperties(file multipart.File) (*request.ImportResult, []request.ValidationError, error)
+	ExportProperties() ([]byte, error)
 }
 
 type propertyUsecase struct {
@@ -81,4 +91,101 @@ func (u *propertyUsecase) UpdateProperty(property *domain.Property) (*domain.Pro
 
 func (u *propertyUsecase) DeleteProperty(id string) error {
 	return u.repo.Delete(id)
+}
+
+func (u *propertyUsecase) ImportProperties(file multipart.File) (*request.ImportResult, []request.ValidationError, error) {
+	decoder := japanese.ShiftJIS.NewDecoder()
+	reader := csv.NewReader(decoder.Reader(file))
+
+	var properties []*domain.Property
+	var errors []request.ValidationError
+	seen := make(map[string]int)
+	result := &request.ImportResult{}
+
+	_, err := reader.Read()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	lineNumber := 1
+	for {
+		row, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+
+		lineNumber++
+
+		if errs := validator.ValidateCSRow(row, lineNumber); len(errs) > 0 {
+			errors = append(errors, errs...)
+			continue
+		}
+
+		key := row[0] + "|" + row[2]
+
+		if _, exists := seen[key]; exists {
+			result.SkippedCount++
+			result.SkippedItems = append(result.SkippedItems, request.SkippedItem{
+				Row:    lineNumber,
+				Reason: fmt.Sprintf("CSV内で重複（物件名：%s）", row[0]),
+			})
+			continue
+		}
+		seen[key] = lineNumber
+
+		layout := row[3]
+		properties = append(properties, &domain.Property{
+			Name:    row[0],
+			Rent:    validator.ParseInt(row[1]),
+			Address: row[2],
+			Layout:  &layout,
+			Status:  row[4],
+		})
+	}
+
+	if len(errors) > 0 {
+		return nil, errors, nil
+	}
+
+	if len(properties) > 0 {
+		inserted, err := u.repo.BulkCreateWithIgnore(properties)
+		if err != nil {
+			return nil, nil, err
+		}
+		result.ImportedCount = int(inserted)
+
+		dbSkipped := len(properties) - int(inserted)
+		result.SkippedCount += dbSkipped
+		if dbSkipped > 0 {
+			result.SkippedItems = append(result.SkippedItems, request.SkippedItem{
+				Reason: fmt.Sprintf("既存データと重複（%d件）", dbSkipped),
+			})
+		}
+	}
+	return result, nil, nil
+}
+
+func (u *propertyUsecase) ExportProperties() ([]byte, error) {
+	properties, err := u.repo.FindAll()
+	if err != nil {
+		return nil, err
+	}
+	if len(properties) == 0 {
+		return nil, errors.New("no data")
+	}
+	var buf bytes.Buffer
+	writer := csv.NewWriter(&buf)
+	header := []string{"物件名", "賃料", "住所", "間取り", "ステータス"}
+	writer.Write(header)
+
+	for _, p := range properties {
+		layout := ""
+		if p.Layout != nil {
+			layout = *p.Layout
+		}
+		writer.Write([]string{p.Name, fmt.Sprintf("%d", p.Rent), p.Address, layout, p.Status})
+	}
+	writer.Flush()
+
+	return buf.Bytes(), nil
 }

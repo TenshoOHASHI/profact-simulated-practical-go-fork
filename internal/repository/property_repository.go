@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/yamu-studio/profact-simulated-practical-go/internal/domain"
@@ -84,4 +85,32 @@ func (r *propertyRepository) Delete(id string) error {
 	query := `UPDATE properties SET deleted_at=NOW() WHERE id = ? AND deleted_at IS NULL`
 	_, err := r.db.Exec(query, id)
 	return err
+}
+
+func (r *propertyRepository) BulkCreateWithIgnore(properties []*domain.Property) (int64, error) {
+	if len(properties) == 0 {
+		return 0, nil
+	}
+
+	for _, p := range properties {
+		if p.ID == "" {
+			p.ID = uuid.NewString()
+		}
+	}
+
+	query := `INSERT IGNORE INTO properties (id, name, rent, address, layout, status) VALUES `
+	placeholders := make([]string, len(properties))
+	values := make([]interface{}, 0, len(properties)*6)
+	for i, p := range properties {
+		placeholders[i] = "(?,?,?,?,?,?)"
+		values = append(values, p.ID, p.Name, p.Rent, p.Address, p.Layout, p.Status)
+	}
+
+	query += strings.Join(placeholders, ",")
+	result, err := r.db.Exec(query, values...)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.RowsAffected()
 }
